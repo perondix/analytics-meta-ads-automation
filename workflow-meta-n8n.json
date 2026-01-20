@@ -1,0 +1,598 @@
+{
+  "name": "Meta API graph - Dados de tráfego pago",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        336,
+        448
+      ],
+      "id": "06020ef3-4ae9-42ee-85c2-fa98687d6876",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "=act_SUA-ACCOUNT-ID",
+        "edge": "insights",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "level",
+                "value": "adset"
+              },
+              {
+                "name": "fields",
+                "value": "campaign_id,campaign_name,adset_id,adset_name,spend,clicks,impressions,reach,cpc,ctr,cpm,actions,cost_per_action_type"
+              },
+              {
+                "name": "limit",
+                "value": "200"
+              },
+              {
+                "name": "filtering",
+                "value": "=[{\"field\":\"campaign.id\",\"operator\":\"EQUAL\",\"value\":\"{{ $('Separa os dados3').item.json.campaign_id }}\"}]"
+              },
+              {
+                "name": "time_range[since]",
+                "value": "={{ $items(\"default_data\")[0].json.since }}"
+              },
+              {
+                "name": "time_range[until]",
+                "value": "={{ $items(\"default_data\")[0].json.until }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        608
+      ],
+      "id": "f0fe49e1-b56f-4e3a-8ba9-f79a04a38a4b",
+      "name": "Get ad set"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "a51c7324-da01-44e4-89f9-e3468dfc829e",
+      "name": "Separa os dados3",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        880,
+        448
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "=act_SUA-ACCOUNT-ID",
+        "edge": "insights",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "level",
+                "value": "campaign"
+              },
+              {
+                "name": "fields",
+                "value": "date_start, date_stop, campaign_id, campaign_name, adset_id, adset_name, ad_id, ad_name, spend, impressions, clicks, actions, cost_per_action_type, objective, optimization_goal, reach, frequency, cpm, ctr, cpc"
+              },
+              {
+                "name": "limit",
+                "value": "200"
+              },
+              {
+                "name": "time_range[since]",
+                "value": "={{ $items(\"default_data\")[0].json.since }}"
+              },
+              {
+                "name": "time_range[until]",
+                "value": "={{ $items(\"default_data\")[0].json.until }}"
+              },
+              {
+                "name": "filtering",
+                "value": "=[{\"field\":\"campaign.id\",\"operator\":\"EQUAL\",\"value\":\"{{ $json.campaign_id }}\"}]"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        608
+      ],
+      "id": "73614f81-faed-42e8-9779-c2b7ba6f2260",
+      "name": "Get Campaign"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "=act_{{ $json.account_id }}",
+        "edge": "insights",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "level",
+                "value": "campaign"
+              },
+              {
+                "name": "fields",
+                "value": "campaign_id,campaign_name"
+              },
+              {
+                "name": "limit",
+                "value": "200"
+              },
+              {
+                "name": "time_range[since]",
+                "value": "={{ $json.since }}"
+              },
+              {
+                "name": "time_range[until]",
+                "value": "={{ $json.until }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        704,
+        448
+      ],
+      "id": "7662304b-bf79-4ef8-a44b-488ae89816d7",
+      "name": "Campanhas ativas"
+    },
+    {
+      "parameters": {
+        "tableId": "meta_ads_insights",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "campaign_name",
+              "fieldValue": "={{ $json.campaign_name }}"
+            },
+            {
+              "fieldId": "adset_name",
+              "fieldValue": "={{ $json.adset_name }}"
+            },
+            {
+              "fieldId": "ad_name",
+              "fieldValue": "={{ $json.ad_name }}"
+            },
+            {
+              "fieldId": "campaign_id",
+              "fieldValue": "={{ $json.campaign_id }}"
+            },
+            {
+              "fieldId": "level",
+              "fieldValue": "={{ $json.level }}"
+            },
+            {
+              "fieldId": "adset_id",
+              "fieldValue": "={{ $json.adset_id }}"
+            },
+            {
+              "fieldId": "ad_id",
+              "fieldValue": "={{ $json.ad_id }}"
+            },
+            {
+              "fieldId": "spend",
+              "fieldValue": "={{ $json.spend }}"
+            },
+            {
+              "fieldId": "impressions",
+              "fieldValue": "={{ $json.impressions }}"
+            },
+            {
+              "fieldId": "reach",
+              "fieldValue": "={{ $json.reach }}"
+            },
+            {
+              "fieldId": "clicks",
+              "fieldValue": "={{ $json.clicks }}"
+            },
+            {
+              "fieldId": "landing_page_views",
+              "fieldValue": "={{ $json.landing_page_views }}"
+            },
+            {
+              "fieldId": "leads_total",
+              "fieldValue": "={{ $json.leads_total }}"
+            },
+            {
+              "fieldId": "messages_7d",
+              "fieldValue": "={{ $json.mensagens_7d }}"
+            },
+            {
+              "fieldId": "purchases",
+              "fieldValue": "={{ $json.purchases }}"
+            },
+            {
+              "fieldId": "cpc",
+              "fieldValue": "={{ $json.cpc }}"
+            },
+            {
+              "fieldId": "cpm",
+              "fieldValue": "={{ $json.cpm }}"
+            },
+            {
+              "fieldId": "ctr",
+              "fieldValue": "={{ $json.ctr }}"
+            },
+            {
+              "fieldId": "frequency",
+              "fieldValue": "={{ $json.frequency }}"
+            },
+            {
+              "fieldId": "cpl_site",
+              "fieldValue": "={{ $json.cpl_site }}"
+            },
+            {
+              "fieldId": "cost_per_message",
+              "fieldValue": "={{ $json.cost_per_message }}"
+            },
+            {
+              "fieldId": "insight_date",
+              "fieldValue": "={{ $json.insight_date }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        448
+      ],
+      "id": "5823b31a-dd65-462f-bb23-d4eb9a76f592",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "UG8aLMOcxNyZ9rpn",
+          "name": "Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputItems = $input.all();\nconst out = [];\n\nfunction toFloat(v) { return parseFloat(v || 0); }\nfunction toInt(v) { return parseInt(v || 0); }\n\nfor (const item of inputItems) {\n  const payload = item.json;\n  const rows = Array.isArray(payload?.data) ? payload.data : [];\n\n  for (const data of rows) {\n    const sp = toFloat(data.spend);\n    const impressions = toInt(data.impressions);\n    const reach = toInt(data.reach);\n\n    let mensagens7d = 0;\n    let mensagensTotalConnection = 0;\n    let linkClickValue = 0;\n    let landingPageView = 0;\n\n    let leadsPixel = 0;\n    let leadsOnsite = 0;\n    let leadsGerais = 0;\n    let compras = 0;\n\n    let cplSite = 0;\n    let custoPorMensagem = 0;\n\n    if (Array.isArray(data.actions)) {\n      for (const action of data.actions) {\n        const value = toInt(action.value);\n\n        if (action.action_type === 'onsite_conversion.messaging_conversation_started_7d') mensagens7d = value;\n        if (action.action_type === 'onsite_conversion.total_messaging_connection') mensagensTotalConnection = value;\n\n        if (action.action_type === 'link_click') linkClickValue = value;\n        if (action.action_type === 'landing_page_view') landingPageView = value;\n\n        if (action.action_type === 'onsite_web_lead') leadsOnsite = value;\n        if (action.action_type === 'offsite_conversion.fb_pixel_lead') leadsPixel = value;\n        if (action.action_type === 'lead') leadsGerais = value;\n\n        if (action.action_type === 'purchase') compras = value;\n      }\n    }\n\n    const leadsSite = (leadsOnsite || 0) + (leadsPixel || 0);\n\n    if (Array.isArray(data.cost_per_action_type)) {\n      for (const c of data.cost_per_action_type) {\n        const v = toFloat(c.value);\n\n        if (c.action_type === 'onsite_conversion.messaging_conversation_started_7d') custoPorMensagem = v;\n\n        if (c.action_type === 'onsite_web_lead' || c.action_type === 'offsite_conversion.fb_pixel_lead') {\n          if (cplSite === 0 || v < cplSite) cplSite = v;\n        }\n      }\n    }\n\n    const custoPorMensagemCalc = mensagens7d > 0 ? (sp / mensagens7d) : 0;\n    const cplSiteCalc = leadsSite > 0 ? (sp / leadsSite) : 0;\n\n    if (!custoPorMensagem) custoPorMensagem = custoPorMensagemCalc;\n    if (!cplSite) cplSite = cplSiteCalc;\n\n    const cpc = linkClickValue > 0 ? (sp / linkClickValue) : 0;\n    const cpm = impressions > 0 ? (sp / (impressions / 1000)) : 0;\n    const frequencia = reach > 0 ? (impressions / reach) : 0;\n\n    out.push({\n      json: {\n        insight_date: data.date_start || null,\n        level: \"ad\",\n\n        campaign_id: data.campaign_id || null,\n        campaign_name: data.campaign_name || null,\n\n        adset_id: data.adset_id || null,\n        adset_name: data.adset_name || null,\n\n        ad_id: data.ad_id || null,\n        ad_name: data.ad_name || null,\n\n        spend: sp,\n\n        clicks: toInt(data.clicks),\n        link_clicks: linkClickValue,\n\n        cpc,\n        cpm,\n        ctr: toFloat(data.ctr),\n        frequency: frequencia,\n\n        impressions,\n        reach,\n\n        landing_page_views: landingPageView,\n\n        leads_onsite: leadsOnsite,\n        leads_pixel: leadsPixel,\n        leads_site: leadsSite,\n        leads_total: leadsGerais,\n\n        cpl_site: cplSite,\n\n        mensagens_7d: mensagens7d,\n        mensagens_total_connection: mensagensTotalConnection,\n        cost_per_message: custoPorMensagem,\n\n        purchases: compras,\n\n        raw: data,\n      }\n    });\n  }\n}\n\nreturn out;"
+      },
+      "id": "c3bd3da7-bd08-4adb-9489-591b0ab0a0e1",
+      "name": "Normaliza ad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const payload = $json;\n\n// Se vier no formato { data: [ { ...insight... } ] }, pega a linha\nconst data = Array.isArray(payload?.data) ? payload.data[0] : payload;\n\n// ======= Valores base =======\nconst sp = parseFloat(data.spend || 0);\nconst impressions = parseInt(data.impressions || 0);\nconst reach = parseInt(data.reach || 0);\n\n// ======= Métricas via actions =======\nlet mensagens7d = 0;\nlet mensagensTotalConnection = 0;\n\nlet linkClickValue = 0;\nlet landingPageView = 0;\n\nlet leadsSite = 0;         // onsite_web_lead + fb_pixel_lead\nlet leadsPixel = 0;        // fb_pixel_lead\nlet leadsOnsite = 0;       // onsite_web_lead\nlet leadsGerais = 0;       // lead (pode misturar origens)\n\nlet compras = 0;\n\n// ======= Custos via cost_per_action_type =======\nlet cplSite = 0;\nlet custoPorMensagem = 0;\n\n// ======= Lê actions =======\nif (Array.isArray(data.actions)) {\n  data.actions.forEach(action => {\n    const value = parseInt(action.value || 0);\n\n    // Mensagens (CTWA)\n    if (action.action_type === 'onsite_conversion.messaging_conversation_started_7d') {\n      mensagens7d = value;\n    }\n\n    if (action.action_type === 'onsite_conversion.total_messaging_connection') {\n      mensagensTotalConnection = value;\n    }\n\n    // Cliques\n    if (action.action_type === 'link_click') {\n      linkClickValue = value;\n    }\n\n    // Landing Page View\n    if (action.action_type === 'landing_page_view') {\n      landingPageView = value;\n    }\n\n    // Leads (Site)\n    if (action.action_type === 'onsite_web_lead') {\n      leadsOnsite = value;\n    }\n\n    if (action.action_type === 'offsite_conversion.fb_pixel_lead') {\n      leadsPixel = value;\n    }\n\n    // Lead genérico\n    if (action.action_type === 'lead') {\n      leadsGerais = value;\n    }\n\n    // Compras\n    if (action.action_type === 'purchase') {\n      compras = value;\n    }\n  });\n}\n\n// Total de leads do site\nleadsSite = (leadsOnsite || 0) + (leadsPixel || 0);\n\n// ======= Lê cost_per_action_type =======\nif (Array.isArray(data.cost_per_action_type)) {\n  data.cost_per_action_type.forEach(c => {\n    const v = parseFloat(c.value || 0);\n\n    // Custo por Mensagem\n    if (c.action_type === 'onsite_conversion.messaging_conversation_started_7d') {\n      custoPorMensagem = v;\n    }\n\n    // CPL Site\n    if (\n      c.action_type === 'onsite_web_lead' ||\n      c.action_type === 'offsite_conversion.fb_pixel_lead'\n    ) {\n      if (cplSite === 0 || v < cplSite) cplSite = v;\n    }\n  });\n}\n\n// ======= Calcula fallback =======\nconst custoPorMensagemCalc = mensagens7d > 0 ? (sp / mensagens7d) : 0;\nconst cplSiteCalc = leadsSite > 0 ? (sp / leadsSite) : 0;\n\nif (!custoPorMensagem || custoPorMensagem === 0) custoPorMensagem = custoPorMensagemCalc;\nif (!cplSite || cplSite === 0) cplSite = cplSiteCalc;\n\n// ======= CPC / CPM / Frequência =======\nconst cpc = linkClickValue > 0 ? (sp / linkClickValue) : 0;\nconst cpm = impressions > 0 ? (sp / (impressions / 1000)) : 0;\nconst frequencia = reach > 0 ? (impressions / reach) : 0;\n\n// ======= Retorno final (1 objeto por item) =======\nreturn {\n  insight_date: data.date_start || null,\n  level: \"campaign\",\n\n  campaign_id: data.campaign_id || null,\n  campaign_name: data.campaign_name || null,\n\n  adset_id: null,\n  adset_name: null,\n  ad_id: null,\n  ad_name: null,\n\n  spend: sp,\n\n  clicks: parseInt(data.clicks || 0),\n  link_clicks: linkClickValue,\n\n  cpc,\n  cpm,\n  ctr: parseFloat(data.ctr || 0),\n  frequency: frequencia,\n\n  impressions,\n  reach,\n\n  landing_page_views: landingPageView,\n\n  leads_onsite: leadsOnsite,\n  leads_pixel: leadsPixel,\n  leads_site: leadsSite,\n  leads_total: leadsGerais,\n\n  cpl_site: cplSite,\n\n  mensagens_7d: mensagens7d,\n  mensagens_total_connection: mensagensTotalConnection,\n  cost_per_message: custoPorMensagem,\n\n  purchases: compras,\n\n  raw: data,\n};"
+      },
+      "id": "98141e64-ad6a-41b5-a155-ee58a7424a3f",
+      "name": "Normaliza campaign",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2240,
+        432
+      ],
+      "id": "b2281d53-f978-470c-91da-3e21ff5de1d5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputItems = $input.all();\nconst out = [];\n\nfunction toFloat(v) { return parseFloat(v || 0); }\nfunction toInt(v) { return parseInt(v || 0); }\n\nfor (const item of inputItems) {\n  const payload = item.json;\n\n  // O Meta geralmente retorna { data: [ ... ] }\n  const rows = Array.isArray(payload?.data) ? payload.data : [];\n\n  for (const data of rows) {\n    const sp = toFloat(data.spend);\n    const impressions = toInt(data.impressions);\n    const reach = toInt(data.reach);\n\n    let mensagens7d = 0;\n    let mensagensTotalConnection = 0;\n    let linkClickValue = 0;\n    let landingPageView = 0;\n\n    let leadsPixel = 0;\n    let leadsOnsite = 0;\n    let leadsGerais = 0;\n    let compras = 0;\n\n    let cplSite = 0;\n    let custoPorMensagem = 0;\n\n    if (Array.isArray(data.actions)) {\n      for (const action of data.actions) {\n        const value = toInt(action.value);\n\n        if (action.action_type === 'onsite_conversion.messaging_conversation_started_7d') mensagens7d = value;\n        if (action.action_type === 'onsite_conversion.total_messaging_connection') mensagensTotalConnection = value;\n\n        if (action.action_type === 'link_click') linkClickValue = value;\n        if (action.action_type === 'landing_page_view') landingPageView = value;\n\n        if (action.action_type === 'onsite_web_lead') leadsOnsite = value;\n        if (action.action_type === 'offsite_conversion.fb_pixel_lead') leadsPixel = value;\n        if (action.action_type === 'lead') leadsGerais = value;\n\n        if (action.action_type === 'purchase') compras = value;\n      }\n    }\n\n    const leadsSite = (leadsOnsite || 0) + (leadsPixel || 0);\n\n    if (Array.isArray(data.cost_per_action_type)) {\n      for (const c of data.cost_per_action_type) {\n        const v = toFloat(c.value);\n\n        if (c.action_type === 'onsite_conversion.messaging_conversation_started_7d') custoPorMensagem = v;\n\n        if (c.action_type === 'onsite_web_lead' || c.action_type === 'offsite_conversion.fb_pixel_lead') {\n          if (cplSite === 0 || v < cplSite) cplSite = v;\n        }\n      }\n    }\n\n    const custoPorMensagemCalc = mensagens7d > 0 ? (sp / mensagens7d) : 0;\n    const cplSiteCalc = leadsSite > 0 ? (sp / leadsSite) : 0;\n\n    if (!custoPorMensagem) custoPorMensagem = custoPorMensagemCalc;\n    if (!cplSite) cplSite = cplSiteCalc;\n\n    const cpc = linkClickValue > 0 ? (sp / linkClickValue) : 0;\n    const cpm = impressions > 0 ? (sp / (impressions / 1000)) : 0;\n    const frequencia = reach > 0 ? (impressions / reach) : 0;\n\n    out.push({\n      json: {\n        insight_date: data.date_start || null,\n        level: \"adset\",\n\n        campaign_id: data.campaign_id || null,\n        campaign_name: data.campaign_name || null,\n\n        adset_id: data.adset_id || null,\n        adset_name: data.adset_name || null,\n\n        ad_id: null,\n        ad_name: null,\n\n        spend: sp,\n\n        clicks: toInt(data.clicks),\n        link_clicks: linkClickValue,\n\n        cpc,\n        cpm,\n        ctr: toFloat(data.ctr),\n        frequency: frequencia,\n\n        impressions,\n        reach,\n\n        landing_page_views: landingPageView,\n\n        leads_onsite: leadsOnsite,\n        leads_pixel: leadsPixel,\n        leads_site: leadsSite,\n        leads_total: leadsGerais,\n\n        cpl_site: cplSite,\n\n        mensagens_7d: mensagens7d,\n        mensagens_total_connection: mensagensTotalConnection,\n        cost_per_message: custoPorMensagem,\n\n        purchases: compras,\n\n        raw: data,\n      }\n    });\n  }\n}\n\nreturn out;"
+      },
+      "id": "e192a0bb-1822-4633-8294-db1f2e598a13",
+      "name": "Normaliza ad set",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d1fcb1fa-7506-403c-90f3-c14e6971c656",
+              "name": "since",
+              "value": "={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "48d8e334-7465-48cf-9c97-6cfdd86cf5a3",
+              "name": "until",
+              "value": "={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "23b03d5d-11a2-49be-8939-4a76b3bad9b6",
+              "name": "account_id",
+              "value": "SUA-ACCOUN-ID",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        448
+      ],
+      "id": "3d108765-32d0-4b94-83cf-128cb814da2b",
+      "name": "default_data"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "=act_SUA-ACCOUNT-ID",
+        "edge": "insights",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "level",
+                "value": "ad"
+              },
+              {
+                "name": "fields",
+                "value": "campaign_id,campaign_name,adset_id,adset_name,spend,clicks,impressions,reach,cpc,ctr,cpm,actions,cost_per_action_type"
+              },
+              {
+                "name": "limit",
+                "value": "200"
+              },
+              {
+                "name": "filtering",
+                "value": "=[{\"field\":\"campaign.id\",\"operator\":\"EQUAL\",\"value\":\"{{ $json.campaign_id }}\"}]"
+              },
+              {
+                "name": "time_range[since]",
+                "value": "={{ $items(\"default_data\")[0].json.since }}"
+              },
+              {
+                "name": "time_range[until]",
+                "value": "={{ $items(\"default_data\")[0].json.until }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1824,
+        608
+      ],
+      "id": "ede7cb63-e7c1-43ea-a5aa-7ee50dd21dc1",
+      "name": "Get ad"
+    },
+    {
+      "parameters": {
+        "content": "## Ativação do fluxo \nAdicione o acionador da sua preferência e recomendo configurar as variáveis de account_id e data para extração dos insights da meta",
+        "height": 752,
+        "width": 768
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        256,
+        160
+      ],
+      "id": "d1e7c708-1340-4376-8e87-ac8692ef3afc",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Extração e normalização de dados\nConfira todos os campos que precisam ser preenchidos na requisição da Meta API graph e as funções para normalização de dados devem funcionar corretamente se você utilizar as mesmas fields. Caso adicione mais fields, ajuste os scripts das funções para normalizar os dados.",
+        "height": 752,
+        "width": 1088,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        160
+      ],
+      "id": "d35803c2-955c-455d-857c-5e5fce4a8869",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Exportação para base de dados\nNesse caso, estou usando o supabase pois se comunica melhor com o Lovable, porém, você pode enviar os dados para qualquer base de dados da sua preferência, basta adicionar o node ou requisição http.",
+        "height": 752,
+        "width": 464,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        160
+      ],
+      "id": "c64ce657-f5a5-4839-8b04-8b73a926f504",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "default_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separa os dados3": {
+      "main": [
+        [
+          {
+            "node": "Get Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ad set": {
+      "main": [
+        [
+          {
+            "node": "Normaliza ad set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Campanhas ativas": {
+      "main": [
+        [
+          {
+            "node": "Separa os dados3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Campaign": {
+      "main": [
+        [
+          {
+            "node": "Normaliza campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza ad": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Normaliza campaign": {
+      "main": [
+        [
+          {
+            "node": "Get ad set",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza ad set": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Get ad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "default_data": {
+      "main": [
+        [
+          {
+            "node": "Campanhas ativas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ad": {
+      "main": [
+        [
+          {
+            "node": "Normaliza ad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "9cec9264-2425-4de8-a4da-3ccbbd52724e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "16477bfece9b466f7002e7920ba8bb8d2c0d5603110e5f21ca230956a8341fc7"
+  },
+  "id": "ifopO68rczAjHJEKonTbe",
+  "tags": []
+}
