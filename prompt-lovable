@@ -1,0 +1,221 @@
+# Prompt para Lovabel
+
+---
+## Quero criar um dashboard de tráfego pago (Meta Ads) personalizado e completo. 
+O projeto deve ser construído com React, TypeScript, Tailwind CSS, Supabase e Recharts.
+## ARQUITETURA DE DADOS
+
+### Tabela Principal: meta_ads_insights
+Esta tabela recebe dados extraídos 1x por dia via automação (Make/n8n) da Graph API do Meta Ads.
+Cada linha representa uma entidade (campaign, adset ou ad) em uma data específica.
+
+Campos principais:
+- level (text): "campaign" | "adset" | "ad" - identifica o nível hierárquico
+- insight_date (date): data do insight
+- campaign_id, campaign_name (text): identificação da campanha
+- adset_id, adset_name (text): identificação do conjunto (null para level=campaign)
+- ad_id, ad_name (text): identificação do anúncio (null para campaign/adset)
+
+Métricas de volume (bigint):
+- spend (numeric): valor gasto
+- impressions, reach, clicks: métricas de entrega
+- landing_page_views: visualizações de página de destino
+- leads_total, leads_site, leads_onsite, leads_pixel: leads por fonte
+- messages_7d, messages_total_connection: conversas iniciadas
+- purchases: compras
+
+Métricas calculadas (numeric):
+- ctr, cpc, cpm, frequency: taxas de performance
+- cpl_site, cost_per_message: custos por conversão
+
+### Tabela Secundária: forms-site
+Leads capturados via formulário do site, com parâmetros UTM para atribuição.
+
+Campos: id, created_at, nome, telefone, utm_source, utm_medium, utm_campaign, 
+utm_content, utm_term, utm_id, fbclid, fbp, fbc, gclid, referrer, landing_page
+
+Filtro obrigatório: utm_source = 'facebook'
+
+### Tabela de Tracking: tracking_colmeia
+Rastreamento do status do lead no WhatsApp/CRM.
+
+Campos: id, telefone, etapa, agente, created_at, atendente
+
+Etapas importantes:
+- Etapas de status: 'Inicio Fluxo', 'sem autorizacao', 'Atendimento Manual', 
+  'Proposta Enviada', 'Proposta Paga', 'Proposta Reprovada', 'Atendimento Encerrado'
+- Etapas de tempo de carteira: '1ano+', '3 a 11 Meses', 'Menos de 3 Meses'
+
+---
+
+## ESTRUTURA DE NAVEGAÇÃO
+
+Sidebar lateral esquerda com navegação para:
+1. Overview (/) - Dashboard principal com visão geral
+2. Campanhas (/campaigns) - Lista e tabela hierárquica
+3. Conjuntos (/adsets) - Lista de adsets
+4. Anúncios (/ads) - Lista de ads
+5. Leads Site (/form-leads) - Análise de formulários
+
+Páginas de detalhe:
+- /campaigns/:campaignId - Detalhes + adsets da campanha
+- /adsets/:adsetId - Detalhes + ads do adset
+
+---
+
+## FUNCIONALIDADES GLOBAIS
+
+### Filtro de Período
+- Contexto global de data (DateFilterContext) que persiste na URL
+- Presets: Hoje, Ontem, Últimos 7 dias, Últimos 30 dias, Este mês, Mês passado
+- Seletor de intervalo customizado com calendário
+- Todas as páginas reagem ao filtro de data
+
+---
+
+## PÁGINA 1: OVERVIEW (Dashboard Principal)
+
+### Seção 1: KPIs de Mídia (grid 4 colunas)
+Cards com: Investimento Total, Impressões, Cliques, CTR, CPC, CPM, Alcance, Frequência
+
+### Seção 2: Gráficos de Tendência (2 colunas)
+- SpendTrendChart: linha de investimento ao longo do tempo
+- MetricsTrendChart: multi-linha com impressões e cliques
+
+### Seção 3: KPIs de Conversão (grid)
+Cards com: Leads Totais, CPL Médio, Landing Page Views, Taxa LPV→Lead, Mensagens, Compras
+
+### Seção 4: Segmentação por Tipo de Lead
+- LeadTypeMetricsGrid: 2 cards comparando "Leads de Site" vs "Leads de Mensagem"
+  - Lógica: Leads Site = campanhas onde leads_total > messages_7d
+  - Lógica: Leads Mensagem = campanhas onde messages_7d >= leads_total
+  - Mostrar: total, CPL, investimento, % do budget
+- LeadTypeDistributionChart: pizza com distribuição de leads
+- LeadTypeComparisonChart: barras comparativas
+- ConversionsTrendChart: linha de leads ao longo do tempo
+
+### Seção 5: Análise de Campanhas
+- PerformanceBarChart: top campanhas por investimento
+- SpendDistributionChart: pizza de distribuição de spend
+
+### Seção 6: Funil de Conversão
+- ConversionFunnelChart: visualização vertical do funil
+  Impressões → Cliques → LP Views → Leads
+
+---
+
+## PÁGINA 2: CAMPANHAS
+
+### KPIs resumidos no topo (reutilizar MediaMetricsGrid)
+
+### Tabela Hierárquica com Drill-down
+Componente HierarchicalCampaignsTable com 3 níveis expansíveis:
+
+1. **Nível Campanha** (linha principal)
+   - Clique para expandir/colapsar adsets
+   - Métricas agregadas de todos os dias do período
+
+2. **Nível AdSet** (indentado)
+   - Aparece ao expandir campanha
+   - Clique para expandir ads
+
+3. **Nível Ad** (mais indentado)
+   - Aparece ao expandir adset
+
+Colunas da tabela:
+- Nome (com indicador de nível)
+- Investimento
+- Impressões
+- Cliques
+- CTR (%)
+- CPC
+- Leads
+- CPL
+
+### EFEITO HEATMAP (importante!)
+Cada célula de métrica deve ter background colorido proporcional ao valor:
+- Calcular valor máximo de cada coluna considerando TODOS os itens (campaigns + adsets + ads)
+- Opacidade varia de 0.08 (valores baixos) a 0.45 (valores altos)
+- Cores por métrica:
+  - Investimento: Teal (181, 44%, 57%)
+  - Impressões: Azul (199, 89%, 48%)
+  - Cliques/Leads: Verde (142, 76%, 36%)
+  - CPC/CPL: Laranja (27, 93%, 53%)
+
+---
+
+## PÁGINA 3: LEADS SITE (Form Leads)
+
+Análise focada na jornada do lead único do formulário até o WhatsApp.
+
+### KPIs (4 cards)
+- Leads Únicos: contagem de telefones distintos
+- Chegaram no WA: leads que existem na tabela tracking_colmeia
+- Média Diária: leads por dia no período
+- Vendas: contagem de leads com etapa = 'Proposta Paga'
+
+### Seção 1: Status e Tempo de Carteira (2 colunas)
+- TimeStagesPieChart: pizza com distribuição de tempo de carteira
+  - 1ano+, 3 a 11 meses, menos de 3 meses
+- KeyStagesBarChart: barras horizontais com etapas do funil
+  - As 7 etapas principais ordenadas por quantidade
+
+### Seção 2: Tendência Temporal (2 colunas)
+- LeadsByDayChart: linha de leads por dia
+- LeadsByHourChart: barras de leads por hora do dia
+
+### Seção 3: Performance (2 colunas)
+- LeadsByCampaignChart: ranking de campanhas por leads
+- LeadsByAdChart: ranking de criativos (utm_content) por leads
+
+### Seção 4: Tabela de Leads
+Tabela paginada e pesquisável com:
+- Data, Nome (mascarado), Telefone (mascarado)
+- Campanha, Criativo
+- Status no WA (badge colorido baseado na etapa)
+
+Lógica de enriquecimento:
+- Cruzar forms-site.telefone com tracking_colmeia.telefone
+- Pegar a etapa mais recente de cada telefone
+- Exibir badge "Sem WA" se não encontrar
+
+---
+
+## DESIGN SYSTEM
+
+### Paleta de Cores (Teal/Turquesa)
+Cor primária: hsl(181, 44%, 57%) - Teal
+Cor de destaque: hsl(27, 93%, 53%) - Laranja
+Sucesso: hsl(142, 76%, 36%) - Verde
+Info: hsl(199, 89%, 48%) - Azul
+Warning: hsl(38, 92%, 50%) - Amarelo
+Destructive: hsl(24, 93%, 52%) - Laranja escuro
+
+### Gráficos (Recharts)
+- chart-1: hsl(173, 25%, 48%)
+- chart-2: hsl(183, 49%, 65%)
+- chart-3: hsl(181, 33%, 79%)
+- chart-4: hsl(186, 64%, 70%)
+- chart-5: hsl(190, 33%, 98%)
+
+### Tipografia
+- Font principal: Montserrat
+- Cards com cantos arredondados (radius: 0.625rem)
+- Sombras sutis
+
+### Componentes UI
+- Usar shadcn/ui para: Card, Table, Button, Badge, Skeleton, Tabs, etc.
+
+---
+
+## LÓGICA DE AGREGAÇÃO DE DADOS
+
+### Regra fundamental:
+- Métricas de VOLUME (spend, impressions, clicks, leads, etc): SOMAR
+- Métricas de TAXA (ctr, cpc, cpm, cpl): RECALCULAR a partir dos totais
+
+Exemplo correto:
+```typescript
+const totalSpend = sum(items.map(i => i.spend));
+const totalClicks = sum(items.map(i => i.clicks));
+const avgCpc = totalClicks > 0 ? totalSpend / totalClicks : 0;
