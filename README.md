@@ -1,145 +1,137 @@
-# n8n Workflow — Meta Ads (Graph API) → Supabase (Campaign / Adset / Ad)
+Meta Ads → Supabase → Dashboard (Lovable)
 
-> Pipeline de dados de tráfego pago (Meta Ads) para Supabase, pronto para dashboard.
+Este repositório contém tudo o que é necessário para montar um pipeline completo de dados de tráfego pago do Meta Ads (Facebook/Instagram), armazenar os dados no Supabase e gerar um dashboard automatizado no Lovable usando os dados do banco.
 
-## Visão geral
+⸻
 
-Este workflow coleta dados de performance do **Meta Ads Insights** (Graph API) e salva no **Supabase** em uma tabela única contendo métricas diárias em três níveis:
+📦 O que existe neste repositório
 
-- `campaign`
-- `adset`
-- `ad`
+1) ⚙️ Workflow do n8n (extração de dados da Meta)
 
-Cada linha representa **uma entidade (campanha OU adset OU ad)** em um determinado dia (`insight_date`).
+<img width="1395" height="676" alt="Captura de Tela 2026-01-20 às 20 41 08" src="https://github.com/user-attachments/assets/24cb490f-784e-45e0-a8c4-20aa2e7d985b" />
 
----
 
-## Objetivo
+Arquivo: workflow.json
 
-1. Buscar campanhas ativas do Meta Ads
-2. Transformar campanhas em uma lista (1 item por campanha)
-3. Para cada campanha:
-   - buscar insights em nível de campanha
-   - buscar insights em nível de adset
-   - buscar insights em nível de ad
-4. Normalizar tudo em um schema único
-5. Unificar (merge append)
-6. Inserir no Supabase
+Workflow no n8n que consulta a Meta Graph API / Insights e extrai métricas diárias em três níveis:
+	•	Campaign
+	•	Adset
+	•	Ad
 
----
+Esses dados são normalizados em um formato único e enviados para o Supabase.
 
-## Estrutura do fluxo (nodes)
+📌 Objetivo: criar uma base estruturada e consistente para dashboards e análises.
 
-1. **Manual Trigger** — When clicking “Execute workflow”
-2. **default_data** — define intervalo de datas (`since`, `until`)
-3. **Campanhas ativas** — lista campanhas ativas (Meta Graph API)
-4. **Separa os dados3** — Split Out (campo `data`)
-5. **Get Campaign** — Meta Insights (`level=campaign`)
-6. **Normaliza campaign** — Code (JS)
-7. **Get ad set** — Meta Insights (`level=adset`)
-8. **Normaliza ad set** — Code (JS)
-9. **Get ad** — Meta Insights (`level=ad`)
-10. **Normaliza ad** — Code (JS)
-11. **Merge** — append (3 inputs)
-12. **Create a row** — Supabase insert
+⸻
 
----
+2) 🗄️ SQL para gerar a tabela no Supabase
 
-## Node: default_data
+Arquivo: supabase.sql
 
-Define o range de datas usado no Meta Insights.
+Script SQL pronto para rodar no Supabase e criar a tabela que recebe os dados do workflow.
 
-Exemplo:
-```json
-{
-  "since": "2026-01-19",
-  "until": "2026-01-19"
-}
-```
+O schema foi pensado para:
+	•	aceitar dados null (quando não se aplica)
+	•	armazenar métricas diárias por nível (campaign | adset | ad)
+	•	permitir drilldown e relacionamento via campaign_id
+	•	facilitar exportação para BI e dashboards
 
-Usado em query params:
-- `time_range[since] = {{ $items("default_data")[0].json.since }}`
-- `time_range[until] = {{ $items("default_data")[0].json.until }}`
+⸻
 
----
+3) 📊 PRD + Prompt para gerar Dashboard no Lovable
 
-## Node: Separa os dados3 (Split Out)
+<img width="1369" height="647" alt="Captura de Tela 2026-01-20 às 20 42 24" src="https://github.com/user-attachments/assets/c41dd510-9122-4fae-b942-db75fd27ee82" />
+<img width="1369" height="647" alt="Captura de Tela 2026-01-20 às 20 42 46" src="https://github.com/user-attachments/assets/d6c16699-d6cb-4375-80c9-b293ebd03ead" />
+<img width="1369" height="647" alt="Captura de Tela 2026-01-20 às 20 43 00" src="https://github.com/user-attachments/assets/9b887688-1f34-4012-aa4a-a1bb3e73943c" />
 
-Config:
-- **Fields To Split Out:** `data`
-- **Include:** `No Other Fields`
 
-Resultado: 1 item por campanha, com campos como:
-- `campaign_id`
-- `campaign_name`
-- `date_start`
-- `date_stop`
+Arquivos sugeridos:
+	•	prd_dashboard.md (especificação do dashboard)
+	•	prompt_lovable.md (prompt pronto para colar no Lovable)
 
----
+Este material descreve:
+	•	quais gráficos e KPIs o dashboard deve ter
+	•	quais filtros precisam existir (data, campanha, adset, ad)
+	•	como organizar páginas e visualizações
+	•	como conectar o dashboard aos dados do Supabase
 
-## Node: Get Campaign (Meta Insights / Query Params)
+📌 Objetivo: acelerar a criação do dashboard com IA sem precisar desenhar tudo do zero.
 
-### Query params
-- `level` = `campaign`
-- `fields` =
-```
-date_start,date_stop,campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name,spend,clicks,impressions,reach,cpc,ctr,cpm,actions,cost_per_action_type,objective,optimization_goal,frequency
-```
-- `limit` = `200`
-- `time_range[since]` = `{{ $items("default_data")[0].json.since }}`
-- `time_range[until]` = `{{ $items("default_data")[0].json.until }}`
+⸻
 
-📌 Não usar `filtering` aqui se o node já roda por campanha (via Split Out).
+🧱 Arquitetura (resumo)
 
----
+Meta Ads (Graph API) → n8n → Supabase → Lovable Dashboard
 
-## Node: Merge
+O pipeline gera uma tabela única com linhas diárias para cada entidade (campanha, adset e ad), permitindo análises como:
+	•	custo por lead (CPL)
+	•	custo por mensagem (CTWA)
+	•	performance por criativo (ads)
+	•	performance por segmentação (adsets)
+	•	performance consolidada por campanha
 
-Modo: `append`
+⸻
 
-Inputs:
-- Input 1: Normaliza campaign
-- Input 2: Normaliza ad set
-- Input 3: Normaliza ad
+🗂️ Estrutura recomendada do repositório
 
----
+/
+├── README.md
+├── workflow.json
+├── supabase.sql
+├── prd_dashboard.md
+├── prompt_lovable.md
+└── docs/
+    └── images/
+        ├── workflow.png
+        ├── get-campaign.png
+        └── supabase-table.png
 
-## Node: Create a row (Supabase)
 
-Insere cada item normalizado como uma linha na tabela do Supabase.
+⸻
 
-Campos esperados no item:
-- `source`, `insight_date`, `level`
-- `campaign_id`, `campaign_name`
-- `adset_id`, `adset_name`
-- `ad_id`, `ad_name`
-- métricas (spend, clicks, impressions, etc.)
+🚀 Como usar
 
----
+1) Criar a tabela no Supabase
+	1.	Abra o painel do Supabase
+	2.	Vá em SQL Editor
+	3.	Cole o conteúdo do arquivo supabase.sql
+	4.	Execute
 
-## Erros comuns
+⸻
 
-### 1) Paired item data is unavailable
-Causa: uso de `.item` em expressão sem pareamento válido.
+2) Importar o workflow no n8n
+	1.	Abra o n8n
+	2.	Vá em Workflows → Import
+	3.	Selecione workflow.json
+	4.	Configure credenciais:
+	•	Meta Graph API
+	•	Supabase (API / URL)
 
-Solução:
-- usar `.first()`, `.last()` ou `$items('node')[0]`
+⸻
 
-### 2) (#100) param filtering must be an array
-Causa: `filtering` enviado como string inválida.
+3) Rodar o workflow
 
-Formato correto:
-```json
-[{"field":"campaign.id","operator":"EQUAL","value":"123"}]
-```
+Execute manualmente ou agende via Cron no n8n.
 
----
+O resultado será a inserção de linhas na tabela do Supabase com métricas diárias.
 
-## Resultado final
+⸻
 
-No Supabase, você terá uma tabela com linhas diárias por:
-- campanha
-- adset
-- ad
+4) Criar o dashboard no Lovable
+	1.	Abra o Lovable
+	2.	Use o arquivo prd_dashboard.md como especificação
+	3.	Cole o conteúdo do prompt_lovable.md
+	4.	Conecte no Supabase usando as tabelas/queries recomendadas
 
-Relacionamento via `campaign_id` permite drilldown no dashboard.
+⸻
+
+📌 Observações importantes
+	•	O workflow foi projetado para evitar duplicações e gerar 1 linha por entidade por dia
+	•	O campo level define o nível do insight (campaign, adset, ad)
+	•	O relacionamento principal do dataset é via campaign_id
+
+⸻
+
+📄 Licença
+
+Uso livre para projetos internos. Ajuste conforme necessário.
