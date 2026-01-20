@@ -1,3 +1,5 @@
+<img width="1395" height="676" alt="Captura de Tela 2026-01-20 às 20 41 08" src="https://github.com/user-attachments/assets/24cb490f-784e-45e0-a8c4-20aa2e7d985b" />
+
 Meta Ads → Supabase → Dashboard (Lovable)
 
 Este repositório contém tudo o que é necessário para montar um pipeline completo de dados de tráfego pago do Meta Ads (Facebook/Instagram), armazenar os dados no Supabase e gerar um dashboard automatizado no Lovable usando os dados do banco.
@@ -7,9 +9,6 @@ Este repositório contém tudo o que é necessário para montar um pipeline comp
 📦 O que existe neste repositório
 
 1) ⚙️ Workflow do n8n (extração de dados da Meta)
-
-<img width="1395" height="676" alt="Captura de Tela 2026-01-20 às 20 41 08" src="https://github.com/user-attachments/assets/24cb490f-784e-45e0-a8c4-20aa2e7d985b" />
-
 
 Arquivo: workflow.json
 
