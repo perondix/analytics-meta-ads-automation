@@ -1,0 +1,210 @@
+## PRD para desenvolvimento do dashboard
+
+Descrição dos dados extraídos pela automação (Meta Ads → Supabase)
+
+Essa automação coleta dados da Meta Ads (Facebook Ads / Instagram Ads) via Graph API Insights e salva no Supabase uma tabela de “meta-insights” chamada com granularidade por entidade (Campaign, AdSet e Ad).
+
+Cada linha na tabela representa uma entidade em um intervalo de datas (time_range), e o campo level identifica se a linha é de: • campaign (Campanha) • adset (Conjunto de anúncios) • ad (Anúncio)_
+
+O principal objetivo é permitir dashboards com drill-down, onde campanhas agregam adsets, e adsets agregam ads, usando IDs como chave.
+
+⸻
+
+Dimensões principais (identificação e hierarquia)
+Campo: level (string)
+
+Indica o tipo de entidade da linha.
+
+Valores possíveis: • "campaign" • "adset" • "ad"
+
+Uso no dashboard: • filtrar o nível da análise • criar páginas separadas ou tabs: Campanhas / AdSets / Ads
+
+⸻
+
+Campo: insight_date (date string ou string)_
+
+Data associada ao insight retornado pela API.
+
+Observação: • normalmente corresponde a date_start retornado pela Meta (ou o início do intervalo consultado) • se o fluxo estiver usando um intervalo de datas único, essa data representa aquele período_
+
+Uso no dashboard: • séries temporais • filtros por período • comparações dia a dia / semana / mês
+
+⸻
+
+Campo: campaign_id (string / bigint em texto)_
+
+ID único da campanha no Meta Ads.
+
+Uso: • chave principal para agrupar tudo por campanha • base para drill-down
+
+⸻
+
+Campo: campaign_name (string)_
+
+Nome da campanha no Meta Ads.
+
+Uso: • labels e visualização no dashboard • tabelas de performance por campanha
+
+⸻
+
+Campo: adset_id (string / bigint em texto ou null)_
+
+ID do conjunto de anúncios.
+
+Regras: • quando level = campaign, esse campo é null • quando level = adset ou level = ad, esse campo normalmente vem preenchido
+
+Uso: • drill-down Campaign → AdSet • filtros e tabelas por conjunto
+
+⸻
+
+Campo: adset_name (string ou null)_
+
+Nome do conjunto de anúncios.
+
+Regras: • null quando level = campaign
+
+⸻
+
+Campo: ad_id (string / bigint em texto ou null)_
+
+ID do anúncio.
+
+Regras: • null quando level = campaign ou level = adset • preenchido quando level = ad
+
+Uso: • drill-down AdSet → Ads • ranking de criativos/anúncios
+
+⸻
+
+Campo: ad_name (string ou null)_
+
+Nome do anúncio.
+
+Regras: • null em campaign/adset
+
+⸻
+
+Métricas principais de mídia (performance)
+As métricas abaixo são numéricas e normalmente vêm diretamente do Meta Insights.
+
+Campo: spend (float)
+
+Valor gasto no período.
+
+Uso: • custo total • ROAS (se tiver receita/conversões) • comparação de budget
+
+⸻
+
+Campo: impressions (integer)
+
+Número de impressões.
+
+Uso: • volume de entrega • base para CPM e CTR
+
+⸻
+
+Campo: reach (integer)
+
+Alcance (usuários únicos alcançados).
+
+Uso: • medir cobertura • frequência
+
+⸻
+
+Campo: clicks (integer)
+
+Cliques totais (geralmente todos os cliques).
+
+Uso: • volume de tráfego • CTR (se disponível)
+
+⸻
+
+Métricas complementares (dependendo do que a API retornar)
+Essas métricas podem existir na tabela dependendo da normalização que foi configurada no fluxo (muito comum em Meta Ads):
+
+Campo: cpm (float)
+
+Custo por mil impressões.
+
+⸻
+
+Campo: cpc (float)
+
+Custo por clique.
+
+⸻
+
+Campo: ctr (float)
+
+Taxa de cliques (click-through rate).
+
+⸻
+
+Campo: frequency (float)
+
+Frequência média = impressões / reach.
+
+⸻
+
+Campo: link_clicks (integer)_
+
+Cliques em link (quando extraído de actions ou métrica específica).
+
+⸻
+
+Campo: landing_page_views (integer)
+
+Visualizações de página de destino.
+
+⸻
+
+Conversões / Eventos (leads, compras, mensagens)
+Dependendo do objetivo da campanha, a automação pode salvar métricas de conversão extraídas de actions[] e action_values[]:_
+
+Exemplos de campos comuns (inteiros) • leads_total • leads_site • leads_pixel • purchases • messages_total / mensagens_total • messages_7d (se houver janela)
+
+Exemplos de campos de custo (float) • cpl_site (custo por lead site) • cost_per_message (custo por conversa/mensagem)_
+
+Uso no dashboard: • funil: impressões → cliques → leads → compras • CPA/CPL • eficiência por campanha/adset/ad
+
+⸻
+
+Campo de auditoria/debug
+Campo: raw (json / objeto)
+
+Cópia do payload_compile da Meta (linha original do insight)._
+
+Uso: • debug e validação • conferir se algum campo não foi mapeado ainda • possibilidade de reprocessar dados sem bater na API de novo
+
+Observação: • esse campo pode ser grande e aumentar o tamanho da tabela • mas é ótimo para auditoria
+
+⸻
+
+Regras de consistência dos dados (muito importante para o dashboard)
+Cada linha tem sempre campaign_id preenchido (mesmo para adset/ad).
+adset_id só existe quando o nível for adset ou ad.
+ad_id só existe quando o nível for ad.
+Métricas (spend, impressions, clicks etc) são sempre numéricas (0 quando não existir).
+Campos que não se aplicam são null (ex.: ad_id em nível campanha).
+O dashboard deve sempre filtrar por level para evitar misturar entidades diferentes na mesma tabela.
+⸻
+
+Como usar esses dados no dashboard (recomendação prática)
+Visões recomendadas 1. Visão “Campaign Overview”
+
+• filtra level = campaign • mostra spend, impressions, clicks, leads, etc • ranking por spend e conversões
+
+2.	Visão “AdSet Breakdown”
+
+•	filtra level = adset
+•	permite filtrar por campaign_id
+•	comparar adsets dentro de uma campanha
+
+3.	Visão “Ads / Criativos”
+
+•	filtra level = ad
+•	permite filtrar por campaign_id e adset_id
+•	ranking de ads por CTR, CPL, CPA, etc_
+
+Drill-down • Campaign → AdSets: campaign_id • AdSet → Ads: adset_id
+
+Me ajude a gerar o plano de desenvolvimento desse dashboard no lovable
