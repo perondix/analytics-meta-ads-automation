@@ -1,0 +1,83 @@
+-- Supabase schema (Postgres)
+-- Tabela única para métricas diárias em nível campaign/adset/ad
+
+create extension if not exists pgcrypto;
+
+create table if not exists public.meta_ads_insights (
+  id bigserial primary key,
+
+  -- origem dos dados
+  source text null default 'meta_ads',
+
+  -- data do insight (dia)
+  insight_date date null,
+
+  -- nível da entidade (campaign | adset | ad)
+  level text null check (level in ('campaign','adset','ad')),
+
+  -- ids e nomes (hierarquia)
+  campaign_id text null,
+  campaign_name text null,
+
+  adset_id text null,
+  adset_name text null,
+
+  ad_id text null,
+  ad_name text null,
+
+  -- métricas principais
+  spend numeric null,
+  impressions bigint null,
+  reach bigint null,
+  clicks bigint null,
+
+  cpc numeric null,
+  cpm numeric null,
+  ctr numeric null,
+  frequency numeric null,
+
+  -- conversões / eventos (normalizados)
+  landing_page_views bigint null,
+
+  leads_onsite bigint null,
+  leads_pixel bigint null,
+  leads_site bigint null,
+  leads_total bigint null,
+
+  messages_7d bigint null,
+  messages_total_connection bigint null,
+
+  purchases bigint null,
+
+  -- custos derivados
+  cpl_site numeric null,
+  cost_per_message numeric null,
+
+  -- extras
+  metrics jsonb null default '{}'::jsonb,
+  normalized boolean null default false,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Índices recomendados para dashboard
+create index if not exists idx_meta_ads_insights_date on public.meta_ads_insights (insight_date);
+create index if not exists idx_meta_ads_insights_level on public.meta_ads_insights (level);
+create index if not exists idx_meta_ads_insights_campaign on public.meta_ads_insights (campaign_id);
+create index if not exists idx_meta_ads_insights_adset on public.meta_ads_insights (adset_id);
+create index if not exists idx_meta_ads_insights_ad on public.meta_ads_insights (ad_id);
+
+-- Trigger para atualizar updated_at automaticamente
+create or replace function public.set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_meta_ads_insights_updated_at on public.meta_ads_insights;
+create trigger trg_meta_ads_insights_updated_at
+before update on public.meta_ads_insights
+for each row execute function public.set_updated_at();
